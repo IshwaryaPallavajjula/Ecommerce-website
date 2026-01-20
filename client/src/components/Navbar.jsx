@@ -4,14 +4,15 @@ import { ShoppingCart, Search, Menu } from 'lucide-react';
 import { ShopContext } from '../context/ShopContext';
 
 const Navbar = () => {
-    const { cart, fetchProducts } = useContext(ShopContext);
+    const { cart } = useContext(ShopContext);
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
     const handleSearch = (e) => {
         e.preventDefault();
-        fetchProducts(searchTerm);
-        navigate('/');
+        if (searchTerm.trim()) {
+            navigate(`/semantic-search?q=${encodeURIComponent(searchTerm)}`);
+        }
     };
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);

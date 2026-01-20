@@ -6,7 +6,7 @@ import Home from './pages/Home';
 import ProductDetails from './pages/ProductDetails';
 import Cart from './pages/Cart';
 import AdminDashboard from './pages/AdminDashboard';
-
+import SemanticSearch from './pages/SemanticSearch';
 function App() {
     return (
         <ShopProvider>
@@ -18,6 +18,8 @@ function App() {
                         <Route path="/product/:id" element={<ProductDetails />} />
                         <Route path="/cart" element={<Cart />} />
                         <Route path="/admin" element={<AdminDashboard />} />
+                        <Route path="/semantic-search" element={<SemanticSearch />} />
+
                     </Routes>
                 </div>
             </Router>

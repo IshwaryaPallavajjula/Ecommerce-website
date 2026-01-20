@@ -100,8 +100,21 @@ Do not include markdown formatting like \`\`\`json.
         throw new Error("Failed to analyze image");
     }
 }
+async function generateEmbedding(text) {
+    try {
+        const result = await genAI.models.embedContent({
+            model: "gemini-embedding-001",
+            contents: text
+        });
 
+        return result.embeddings[0].values;
+    } catch (error) {
+        console.error("Error generating embedding:", error);
+        throw new Error("Failed to generate embedding");
+    }
+}
 module.exports = {
     generateProductDescriptionWithAI,
-    generateProductDetailsFromImageWithAI
+    generateProductDetailsFromImageWithAI,
+    generateEmbedding
 };

@@ -5,76 +5,62 @@ const { MongoClient } = require("mongodb");
 
 const geminiApiKey = process.env.GEMINI_API_KEY;
 if (!geminiApiKey) {
-  console.error("CRITICAL ERROR: GEMINI_API_KEY is missing");
-  process.exit(1);
+    console.error("CRITICAL ERROR: GEMINI_API_KEY is not defined in environment variables.");
 }
 
 const pineconeApiKey = process.env.PINECONE_API_KEY;
 if (!pineconeApiKey) {
-  console.error("CRITICAL ERROR: PINECONE_API_KEY is missing");
-  process.exit(1);
+    console.error("CRITICAL ERROR: PINECONE_API_KEY is not defined in environment variables.");
 }
 
 const pineconeIndex = process.env.PINECONE_INDEX;
 if (!pineconeIndex) {
-  console.error("CRITICAL ERROR: PINECONE_INDEX is missing");
-  process.exit(1);
-}
-
-const mongoUri = process.env.MONGO_URI;
-if (!mongoUri) {
-  console.error("CRITICAL ERROR: MONGO_URI is missing");
-  process.exit(1);
+    console.error("CRITICAL ERROR: PINECONE_INDEX is not defined in environment variables.");
 }
 
 async function main() {
-  const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-  const pinecone = new Pinecone({ apiKey: pineconeApiKey });
-  const index = pinecone.index(pineconeIndex);
 
-  const client = new MongoClient(mongoUri);
-  await client.connect();
+    const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+    const pinecone = new Pinecone({ apiKey: pineconeApiKey });
+    const index = pinecone.index(pineconeIndex);
 
-  const db = client.db("shopmate");
-  const products = await db.collection("products").find({}).toArray();
+    // Get all the products from mongodb
+    const client = new MongoClient(process.env.MONGO_URI);
+    await client.connect();
+    const db = client.db("shopmate");
+    const getCollection = () => db.collection("products");
+    const products = await getCollection().find({}).toArray();
 
-  const vectors = [];
+    const vectors = [];
+    // For each product, generate embedding
+    for (const product of products) {
+        const response = await ai.models.embedContent({
+            model: 'gemini-embedding-001',
+            contents: 'Product Name: ' + product.name + ', Product Description: ' + product.description
+        });
 
-  for (const product of products) {
-    const response = await ai.models.embedContent({
-      model: "gemini-embedding-001",
-      contents: [
-        {
-          parts: [
-            {
-              text: product.description,
-            },
-          ],
-        },
-      ],
-    });
+        console.log("Created embedding for product: " + product.name);
 
-    console.log("Created embedding for product:", product.name);
+        // Push this vector to an array
+        const vector = {
+            id: product._id.toString(),
+            values: response.embeddings[0].values,
+            metadata: {
+                name: product.name,
+                description: product.description,
+                category: product.category,
+                price: product.price
+            }
+        };
+        vectors.push(vector);
+    }
 
-    vectors.push({
-      id: product._id.toString(),
-      values: response.embeddings[0].values, // ✅ correct
-      metadata: {
-        name: product.name,
-        description: product.description,
-        category: product.category,
-        price: product.price,
-      },
-    });
-  }
+    console.log("Total vectors generated: " + vectors.length);
 
-  console.log("Total vectors to be upserted:", vectors.length);
-
-  await index.upsert(vectors);
-
-  console.log("Successfully upserted vectors to Pinecone index");
-
-  await client.close();
+    // Upload to pinecone
+    await index.upsert(vectors);
+    console.log("Successfully uploaded embeddings to pinecone");
+    await client.close();
 }
 
 main();
