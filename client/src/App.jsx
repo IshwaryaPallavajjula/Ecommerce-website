@@ -7,6 +7,7 @@ import ProductDetails from './pages/ProductDetails';
 import Cart from './pages/Cart';
 import AdminDashboard from './pages/AdminDashboard';
 import SemanticSearch from './pages/SemanticSearch';
+import ShopMateChatbot from './components/ShopMateChatbot';
 function App() {
     return (
         <ShopProvider>
@@ -21,6 +22,7 @@ function App() {
                         <Route path="/semantic-search" element={<SemanticSearch />} />
 
                     </Routes>
+                    <ShopMateChatbot />
                 </div>
             </Router>
         </ShopProvider>

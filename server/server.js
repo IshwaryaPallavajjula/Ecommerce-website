@@ -3,7 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const { connectDB } = require('./config/db');
 const productRoutes = require('./routes/productRoutes');
-
+const aiRoutes = require('./routes/aiRoutes');
 dotenv.config();
 
 const app = express();
@@ -15,6 +15,8 @@ app.use(express.json());
 
 // Routes
 app.use('/api/products', productRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.get('/', (req, res) => {
     res.send('ShopMATE API is running...');
